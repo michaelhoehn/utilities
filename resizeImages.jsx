@@ -3,14 +3,14 @@ var aspectRatios = {
   A: { width: 4, height: 5 },
   B: { width: 5, height: 4 },
   C: { width: 1, height: 1.41 },
-  // D: { width: 1.41, height: 1 },
-  // E: { width: 3, height: 4 },
-  // F: { width: 4, height: 3 },
-  // G: { width: 2, height: 3 },
-  // H: { width: 3, height: 2 },
-  // I: { width: 4, height: 5.091 },
-  // J: { width: 5.091, height: 4 },
-  // K: { width: 1, height: 1 },
+  D: { width: 1.41, height: 1 },
+  E: { width: 3, height: 4 },
+  F: { width: 4, height: 3 },
+  G: { width: 2, height: 3 },
+  H: { width: 3, height: 2 },
+  I: { width: 4, height: 5.091 },
+  J: { width: 5.091, height: 4 },
+  K: { width: 1, height: 1 },
 };
 
 function getImageType() {
