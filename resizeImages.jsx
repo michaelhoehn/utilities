@@ -13,20 +13,61 @@ var aspectRatios = {
   // K: { width: 1, height: 1 },
 };
 
-function resizeCanvasToAspectRatio(doc, aspectRatio) {
+function getImageType() {
+  var result = prompt(
+    "Is the image a white background or full bleed?\n\nEnter 'white' for white background or 'bleed' for full bleed:",
+    "white"
+  );
+
+  // If user cancels or enters something other than the two options, default to white.
+  if (result !== "white" && result !== "bleed") {
+    result = "white";
+  }
+
+  return result;
+}
+
+function resizeCanvasToAspectRatio(doc, aspectRatio, imageType) {
   var currentWidth = doc.width;
   var currentHeight = doc.height;
+  var targetWidth, targetHeight;
 
-  var targetWidth = currentHeight * (aspectRatio.width / aspectRatio.height);
-  var targetHeight = currentWidth * (aspectRatio.height / aspectRatio.width);
+  if (imageType === "white") {
+    var desiredAspectRatio = aspectRatio.width / aspectRatio.height;
+    var currentAspectRatio = currentWidth / currentHeight;
 
-  var newWidth = Math.max(currentWidth, targetWidth);
-  var newHeight = Math.max(currentHeight, targetHeight);
+    if (currentAspectRatio > desiredAspectRatio) {
+      // Current image is wider than desired. Keep the width, adjust the height.
+      targetWidth = currentWidth;
+      targetHeight = currentWidth / desiredAspectRatio;
+    } else {
+      // Current image is taller than desired. Keep the height, adjust the width.
+      targetWidth = currentHeight * desiredAspectRatio;
+      targetHeight = currentHeight;
+    }
 
-  doc.resizeCanvas(newWidth, newHeight, AnchorPosition.MIDDLECENTER);
+    doc.resizeCanvas(targetWidth, targetHeight, AnchorPosition.MIDDLECENTER);
+  } else {
+    // Full bleed
+    var desiredAspectRatio = aspectRatio.width / aspectRatio.height;
+    var currentAspectRatio = currentWidth / currentHeight;
 
-  // Fill with white background
-  fillWithWhiteBackground(doc);
+    if (currentAspectRatio > desiredAspectRatio) {
+      // The image is wider than desired, adjust width
+      targetWidth = currentHeight * desiredAspectRatio;
+      targetHeight = currentHeight;
+    } else {
+      // The image is taller than desired, adjust height
+      targetWidth = currentWidth;
+      targetHeight = currentWidth / desiredAspectRatio;
+    }
+
+    var x = (currentWidth - targetWidth) / 2;
+    var y = (currentHeight - targetHeight) / 2;
+
+    var bounds = [x, y, x + targetWidth, y + targetHeight];
+    doc.crop(bounds);
+  }
 }
 
 function fillWithWhiteBackground(doc) {
@@ -93,16 +134,32 @@ function processImages() {
     });
 
     for (var i = 0; i < files.length; i++) {
-      var outputFolder = createFolderForImage(files[i].name, folder);
+      var doc = app.open(files[i]);
+
+      ensureLayerIsUnlocked(doc); // Ensure the layer is unlocked
+
+      // Define the output folder for each image
+      var outputFolder = new Folder(
+        files[i].parent + "/" + files[i].name.split(".")[0]
+      );
+      if (!outputFolder.exists) {
+        outputFolder.create();
+      }
+
+      var imageType = getImageType(); // Get the user's input once per image
+
       for (var key in aspectRatios) {
-        var doc = app.open(files[i]);
-        ensureLayerIsUnlocked(doc);
-        resizeCanvasToAspectRatio(doc, aspectRatios[key]);
+        resizeCanvasToAspectRatio(doc, aspectRatios[key], imageType);
         fillWithWhiteBackground(doc);
         saveImageWithNewName(doc, key, outputFolder);
 
         doc.close(SaveOptions.DONOTSAVECHANGES);
+        doc = app.open(files[i]); // Reopen the image for the next aspect ratio
+
+        ensureLayerIsUnlocked(doc); // Ensure the layer is unlocked again after reloading
       }
+
+      doc.close(SaveOptions.DONOTSAVECHANGES); // Close the document fully after processing all aspect ratios
     }
   }
 }
