@@ -19,7 +19,7 @@ if (srcFolder != null) {
     var doc = open(files[i]);
 
     // 2. Rescale the image by 50%
-    doc.resizeImage(doc.width * 0.5, doc.height * 0.5);
+    doc.resizeImage(doc.width * 0.25, doc.height * 0.25);
 
     // 3. Make a new text layer
     var textLayer = doc.artLayers.add();
